@@ -32,7 +32,7 @@ fdata <- combm[!duplicated(combm[,1]),]
 #merge( fdata[c("1:nrow(svpost)", "Name")], svpost.1[1:2], by.x="1:nrow(svpost)", by.y="1:nrow(svpost)", all.y=T)
 #masked
 fdata <-  rbind(fdata, cbind(svpre.1[62,], svpost.1[55,])[,c(2,1, 3:4, 6:69, 75, 78:(ncol(svpre.1)+ncol(svpost.1)), 70:74)])
-#masked
+#masked no pre
 #masked
 fdata <-  rbind(fdata, cbind(svpre.1[32,], svpost.1[41,])[,c(2,1, 3:4, 6:69, 75, 78:(ncol(svpre.1)+ncol(svpost.1)), 70:74)])
 #masked
@@ -42,7 +42,7 @@ fdata <-  rbind(fdata, cbind(svpre.1[70,], svpost.1[26,])[,c(2,1, 3:4, 6:69, 75,
 #masked
 fdata <-  rbind(fdata, cbind(svpre.1[9,], svpost.1[24,])[,c(2,1, 3:4, 6:69, 75, 78:(ncol(svpre.1)+ncol(svpost.1)), 70:74)])
 
-#Decision to eliminate early form of survey and all related subjects August 2015
+#Decision to eliminate early form of survey and all related subjects August 2015 (n=21)
 svpre.1 <- svpre.1[1:78,]
 fdata <- fdata[fdata[10]==1000,]
 
@@ -90,21 +90,25 @@ fdata <- fdata[fdata[10]==1000,]
   	}
   	text(-6, max(lmethods.data[[i]])/2, lmethods.data.labels[i], pos=4)
   }
-  #Table of obstacles; pre; count table
+  #Table of obstacles; pre; count table; converted to yes/no defined by a non-answer signalling "no", while any answer (checkmark or number) is defined as a "yes"
+  data.pre <- apply(svpre.1[,70:74], 2, as.character)
+  data.pre <- replace(data.pre, data.pre!="1000", 1)
+  data.pre <- replace(data.pre, data.pre=="1000", 0)
+  lmethods.data.pre <- apply(data.pre, 2, table)
   obstacle.table.pre <- NULL
-  for (i in 1:length(lmethods.data.pre)) {
-    if (sum(lmethods.data.pre[[i]])==0) {
+  for (i in 1:ncol(lmethods.data.pre)) {
+    if (sum(lmethods.data.pre[,i])==0) {
       obstacle.table.pre <- rbind(obstacle.table.pre, rep(0,6))
     }
     else {
-      obstacle.table.pre <- rbind(obstacle.table.pre, lmethods.data.pre[[i]])
+      obstacle.table.pre <- rbind(obstacle.table.pre, lmethods.data.pre[,i])
     }
   }
-  colnames(obstacle.table.pre) <- c(1:5, "NA")
-  rownames(obstacle.table.pre) <- lmethods.data.labels
-  obstacle.table.pre[,6:1]
+  colnames(obstacle.table.pre) <- c("No/NA", "Yes")
+  rownames(obstacle.table.pre) <- substr(colnames(lmethods.data.pre), regexpr("PNBrankobstacles.", colnames(lmethods.data.pre))+17, nchar(colnames(lmethods.data.pre)))
+  obstacle.table.pre
   
-  #Table of obstacles; post; count table
+  #Table of obstacles; post; count table; Post answers cannot be converted to "yes" or "no" by the same motif
   obstacle.table.post <- NULL
   for (i in 1:length(lmethods.data)) {obstacle.table.post <- rbind(obstacle.table.post, lmethods.data[[i]])}
   rownames(obstacle.table.post) <- lmethods.data.labels
@@ -385,7 +389,7 @@ fdata <- fdata[fdata[10]==1000,]
   h <- data.1[,8] # Lipid rescue pack
   i <- apply(data.2[,seq(1,22, by=2)],1, sum) #SI
   j <- apply(data.2[,seq(2,22, by=2)],1, sum) #Caths
-  k <- (i+j)-f #All PNB
+  k <- (i+j)-f #All PNB change
   ddiff <- as.numeric(as.Date(fdata[,3], format="%m/%d/%Y") - as.Date(fdata[,71], format="%m/%d/%Y"))
   #Scattermatrix of most related variables to outcomes SI and Cont
   scatterplotMatrix(~i+j+f+g+c1+d+ddiff|e, var.labels=c("numSI (post)", "numCath (post)", "Av PNB/Month (pre)", "Highest PNB/Month (pre)", "Experience(postres)", "Training(postres)", "Time Elapsed (days)"))
@@ -443,7 +447,7 @@ fdata <- fdata[fdata[10]==1000,]
   lmethods.data_post <- c(lmethods.data_post[c(1:4,6,8,9,10)], 0, lmethods.data_post[c(5,7,11)])
   lmethods.data.labels_post <- substr(names(lmethods.data_post), regexpr("attend....", names(lmethods.data_post))+10, nchar(names(lmethods.data_post)))
   
-  #Baseline and post-training use of USG compared by proportion test, which tests for equal proportions of USG users before and after. npre = 99, npost=59, p<0.05 means that proportions are significantly unequal.
+  #Baseline and post-training use of USG compared by proportion test, which tests for equal proportions of USG users before and after. npre =78 (not 99), npost=46 (not 59), p<0.05 means that proportions are significantly unequal.
   myFunction <- function(myTable){return(myTable["1"])}
   baseline <- sapply(lmethods.data_pre[seq(1,50-21+6,by=3)], myFunction)
   postTraining <- sapply(lmethods.data_post, myFunction)
@@ -468,9 +472,9 @@ fdata <- fdata[fdata[10]==1000,]
   rownames(result)[9] <- lmethods.data.labels_pre[9]
   result
   
-
+  
   #Teching method effectiveness
-  #Teaching effectiveness change is a 1-5 Likert scale. The 2 acceptable ways that I know how to compare these score are by 5 group chi-squared test or with a paired t-test. The chi quare test compares the scores by subgroup, while the t-test takes into account the change expressed by each respondent. Both test methods were similar in this sample.
+  #Teaching effectiveness change is a 1-5 Likert scale. The 2 acceptable ways that I know how to compare these score are by 5 group chi-squared test or with a paired t-test. The chi quare test compares the scores by subgroup, while the t-test takes into account the change expressed by each respondent. Both test methods were similar in this sample but do not always find the same conclusion.
   data.1_pre <- sapply(svpre.1[,52:60], as.character)
   data.1_pre <- replace(data.1_pre, data.1_pre==1000, "NA")
   data.1_pre <- replace(data.1_pre, data.1_pre=="?", "NA")
@@ -496,6 +500,7 @@ fdata <- fdata[fdata[10]==1000,]
   baseline <- apply(apply(data.1_pre, 2, as.numeric),2,median, na.rm=T)
   baseline <- c(baseline[c(1:7,9)], 0, baseline[8])
   baseline.summary <- apply(apply(data.1_pre, 2, as.numeric),2,summary, na.rm=T)
+  baseline.summary <- cbind(baseline.summary[,c(1:7,9)], 0, baseline.summary[,8])  
   postTraining <- c(apply(fdata[,132:140], 2, median, na.rm=T), 0)
   postTraining.summary <- cbind(apply(apply(fdata[,132:140],2,as.numeric), 2, summary, na.rm=T), 0)
   
@@ -521,3 +526,64 @@ rownames(result) <- lmethods.data.labels_pre
 rownames(result)[9] <- lmethods.data.labels_post[9]
 colnames(result) <- c("baseline", "post", "chisq p", "test p")
 result
+
+
+#Pre-Post survey performance comparisons
+data.1 <- sapply(fdata[,c(6:10,12:13,68)-1], as.character)
+data.1 <- replace(data.1, data.1=="1000", "NA")
+data.1 <- replace(data.1, data.1=="<10", "10")
+data.1 <- replace(data.1, data.1=="100+", "100")
+data.1 <- replace(data.1, data.1=="<20", "20")
+data.1 <- replace(data.1, data.1==">20", "20")
+data.1 <- replace(data.1, data.1=="1,2", "3")
+data.1 <- replace(data.1, data.1=="1, 2", "3")
+data.1 <- replace(data.1, data.1=="2000", "3")
+data.1 <- replace(data.1, data.1=="3000", "7")
+data.1 <- replace(data.1, data.1=="4000", "11")
+data.1 <- apply(data.1, 2, as.numeric)
+data.1[,4] <- replace(data.1[,4], data.1[,4]=="3", "1")
+data.1[,4] <- replace(data.1[,4], data.1[,4]=="4", "2")
+data.1 <- apply(data.1, 2, as.numeric)
+#outcomes
+data.2 <- fdata[,76:97]
+data.2 <- replace(data.2, data.2=="2-Feb", NA)
+data.2 <- apply(data.2, 2, as.numeric)
+
+f <- data.1[,6] #PNB per month
+i <- apply(data.2[,seq(1,22, by=2)],1, sum) #SI
+j <- apply(data.2[,seq(2,22, by=2)],1, sum) #Caths
+
+#This t-test of the performance number before (f) versus the performance number afterwards (i+j) indicates that there was a difference in performance. This is not only attributable to the seminar, but also all colinear factors related to the period between measurements like time, additional training, or varying combinations. Methods like multiple regression can explain the interplay between these factors. 
+t.test(f, i+j, na.rm=T, paired=T)
+
+# Bargraphs showing before and after on the same scale; bar labels show increase in practice for each subject
+par(mfrow=c(2,1), mar=c(1,2,2,1))
+barplot(f, ylim=c(0,170), main="Pre #PNB")
+barplot(rbind(i,j), ylim=c(0,170), main="Post #SI + #Cath")
+mylabels <- round((i+j)-f,0)
+mylabels[mylabels>0 & !is.na(mylabels)] <- paste("+", mylabels[mylabels>0 & !is.na(mylabels)], sep="")
+text(seq(0.75,(1.2*46),by=1.2), i+j+5, mylabels, cex=0.7)
+#plot(rep(1:2, each=46), c(f,i+j))
+#for (myi in 1:46){lines(1:2,  c(f[myi],i[myi]+j[myi]))}
+
+
+
+#Does retention time affect change in Teaching Rating?
+#The first question is, for which teaching rating?
+data.1_pre <- sapply(fdata[,51:59], as.character)
+data.1_pre <- replace(data.1_pre, data.1_pre==1000, NA)
+data.1_pre <- replace(data.1_pre, data.1_pre=="?", NA)
+data.1_pre <- cbind(data.1_pre[,c(1:7,9)], NA, data.1_pre[,8]) #Pre
+data._post <- cbind(sapply(fdata[,132:140], as.character),NA) #Post
+TEdiff <- apply(data._post,2,as.numeric) - apply(data.1_pre,2,as.numeric)
+TEdiff <- replace(TEdiff, is.na(TEdiff), 0)
+ddiff <- as.numeric(as.Date(fdata[,3], format="%m/%d/%Y") - as.Date(fdata[,71], format="%m/%d/%Y"))
+lmethods.data.labels_pre <- substr(colnames(data.1_pre), regexpr("teachingmethods.", colnames(data.1_pre))+16, nchar(colnames(data.1_pre)))
+
+par(mfrow=c(5,2), mar=c(4,2,1,1))
+#dotplot shows the relationship between change in score and retention time
+apply(TEdiff, 2, plot, ddiff)
+#correlation between change in score and retention time
+cor.list <- apply(TEdiff, 2, cor, ddiff)
+names(cor.list) <- NULL
+cbind(lmethods.data.labels_pre, cor.list)
